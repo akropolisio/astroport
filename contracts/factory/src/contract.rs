@@ -405,11 +405,6 @@ pub fn query_fee_info(deps: Deps, pair_type: PairType) -> StdResult<FeeInfoRespo
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
-    let config = CONFIG.load(deps.as_ref().storage)?;
-    CONFIG.save(deps.storage, &config)?;
-
-    let pairs = PAIRS.load(deps.as_ref().storage, PAIR_INFO_KEY.as_bytes())?;
-    PAIRS.save(deps.storage, PAIR_INFO_KEY.as_bytes(), &pairs)?;
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default())
 }
