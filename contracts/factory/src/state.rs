@@ -17,7 +17,8 @@ pub struct Config {
 }
 
 pub const CONFIG: Item<Config> = Item::new("config");
-pub const PAIRS: Map<&[u8], PairInfo> = Map::new("pair_info");
+pub const PAIR_INFO_KEY: &str = "pair_info";
+pub const PAIRS: Map<&[u8], PairInfo> = Map::new(PAIR_INFO_KEY);
 
 pub fn pair_key(asset_infos: &[AssetInfo; 2]) -> Vec<u8> {
     let mut asset_infos = asset_infos.to_vec();

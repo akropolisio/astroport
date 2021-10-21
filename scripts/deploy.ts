@@ -5,7 +5,7 @@ import {
     readArtifact,
     deployContract,
     executeContract,
-    uploadContract,
+    uploadContract, instantiateContract,
 } from './helpers.js'
 import {configDefault} from './deploy_configs.js'
 import {join} from 'path'
@@ -109,7 +109,7 @@ async function main() {
         deployConfig.factoryInitMsg.config.pair_configs[0].code_id = network.pairCodeID
         deployConfig.factoryInitMsg.config.pair_configs[1].code_id = network.pairStableCodeID
         deployConfig.factoryInitMsg.config.token_code_id = network.tokenCodeID
-        console.log(`CodeIs Pair Contract: ${network.pairCodeID} CodeId Stable Pair Contract: ${network.pairStableCodeID}`)
+        console.log(`CodeId Pair Contract: ${network.pairCodeID} CodeId Stable Pair Contract: ${network.pairStableCodeID}`)
         deployConfig.factoryInitMsg.config.gov = wallet.key.accAddress
         network.factoryAddress = await deployContract(
             terra,
