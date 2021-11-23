@@ -134,8 +134,7 @@ pub fn try_enter(
         }))
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.deposit_token_addr.to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
-                owner: info.sender.to_string(),
+            msg: to_binary(&Cw20ExecuteMsg::Transfer {
                 recipient: env.contract.address.to_string(),
                 amount,
             })?,
@@ -165,10 +164,7 @@ pub fn try_leave(
     let res = Response::new()
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: config.share_token_addr.to_string(),
-            msg: to_binary(&Cw20ExecuteMsg::BurnFrom {
-                owner: info.sender.to_string(),
-                amount: share,
-            })?,
+            msg: to_binary(&Cw20ExecuteMsg::Burn { amount: share })?,
             funds: vec![],
         }))
         .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
