@@ -19,7 +19,6 @@ use astroport::{
     vesting::ExecuteMsg as VestingExecuteMsg,
 };
 use cw2::set_contract_version;
-
 // version info for migration info
 const CONTRACT_NAME: &str = "astroport-generator";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -133,11 +132,10 @@ pub fn execute(
             deps,
             env,
             Some(lp_token.clone()),
-            ExecuteOnReply::DepositFor {
+            ExecuteOnReply::Deposit {
                 lp_token,
-                beneficiary,
+                account: beneficiary,
                 amount,
-                sender: info.sender,
             },
         ),
         ExecuteMsg::Withdraw { lp_token, amount } => update_rewards_and_execute(
@@ -375,13 +373,7 @@ fn process_after_update(deps: DepsMut, env: Env) -> Result<Response, ContractErr
                     lp_token,
                     account,
                     amount,
-                } => deposit(deps, env, lp_token, account, amount, None),
-                ExecuteOnReply::DepositFor {
-                    lp_token,
-                    beneficiary,
-                    amount,
-                    sender,
-                } => deposit(deps, env, lp_token, beneficiary, amount, Some(sender)),
+                } => deposit(deps, env, lp_token, account, amount),
                 ExecuteOnReply::Withdraw {
                     lp_token,
                     account,
@@ -494,15 +486,10 @@ pub fn deposit(
     lp_token: Addr,
     beneficiary: Addr,
     amount: Uint128,
-    sender: Option<Addr>,
 ) -> Result<Response, ContractError> {
     let lp_token = deps.api.addr_validate(lp_token.as_str())?;
     let beneficiary = deps.api.addr_validate(beneficiary.as_str())?;
 
-    let sender = match sender {
-        Some(sender) => sender,
-        None => beneficiary.clone(),
-    };
     let mut response = Response::new().add_attribute("Action", "Deposit");
 
     let mut user = USER_INFO
@@ -541,14 +528,13 @@ pub fn deposit(
             }
         }
     }
-    //call transfer function for lp token from: info.sender to: env.contract.address amount:_amount
+    //call transfer function for lp token from: env.sender to: env.contract.address amount:_amount
     if !amount.is_zero() {
         match &pool.reward_proxy {
             Some(proxy) => {
                 response.messages.push(SubMsg::new(WasmMsg::Execute {
                     contract_addr: lp_token.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::SendFrom {
-                        owner: sender.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Send {
                         contract: proxy.to_string(),
                         msg: to_binary(&ProxyCw20HookMsg::Deposit {})?,
                         amount,
@@ -559,8 +545,7 @@ pub fn deposit(
             None => {
                 response.messages.push(SubMsg::new(WasmMsg::Execute {
                     contract_addr: lp_token.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
-                        owner: sender.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: env.contract.address.to_string(),
                         amount,
                     })?,
