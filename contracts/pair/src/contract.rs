@@ -283,8 +283,10 @@ pub fn provide_liquidity(
         }
     }
 
-    // assert slippage tolerance
-    assert_slippage_tolerance(&slippage_tolerance, &deposits, &pools)?;
+    // set default slippage tolerance if unset and assert
+    let default_slippage_tolerance = Decimal::percent(50);
+    let some_slippage_tolerance = Some(slippage_tolerance.unwrap_or(default_slippage_tolerance));
+    assert_slippage_tolerance(&some_slippage_tolerance, &deposits, &pools)?;
 
     let total_share = query_supply(&deps.querier, config.pair_info.liquidity_token.clone())?;
     let share = if total_share.is_zero() {
