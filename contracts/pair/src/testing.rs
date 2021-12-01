@@ -122,10 +122,22 @@ fn provide_liquidity() {
         amount: Uint128::new(200_000000000000000000u128),
     }]);
 
-    deps.querier.with_token_balances(&[(
-        &String::from("liquidity0000"),
-        &[(&String::from(MOCK_CONTRACT_ADDR), &Uint128::new(0))],
-    )]);
+    deps.querier.with_token_balances(&[
+        (
+            &String::from("liquidity0000"),
+            &[(
+                &String::from(MOCK_CONTRACT_ADDR),
+                &Uint128::new(100_000000000000000000),
+            )],
+        ),
+        (
+            &String::from("asset0000"),
+            &[(
+                &String::from(MOCK_CONTRACT_ADDR),
+                &Uint128::new(100_000000000000000000),
+            )],
+        ),
+    ]);
 
     let msg = InstantiateMsg {
         asset_infos: [
@@ -156,7 +168,7 @@ fn provide_liquidity() {
                 info: AssetInfo::Token {
                     contract_addr: Addr::unchecked("asset0000"),
                 },
-                amount: Uint128::from(100_000000000000000000u128),
+                amount: Uint128::from(50_000000000000000000u128),
             },
             Asset {
                 info: AssetInfo::NativeToken {
@@ -189,7 +201,7 @@ fn provide_liquidity() {
                 msg: to_binary(&Cw20ExecuteMsg::TransferFrom {
                     owner: String::from("addr0000"),
                     recipient: String::from(MOCK_CONTRACT_ADDR),
-                    amount: Uint128::from(100_000000000000000000u128),
+                    amount: Uint128::from(50_000000000000000000u128),
                 })
                 .unwrap(),
                 funds: vec![],
@@ -207,7 +219,7 @@ fn provide_liquidity() {
                 contract_addr: String::from("liquidity0000"),
                 msg: to_binary(&Cw20ExecuteMsg::Mint {
                     recipient: String::from("addr0000"),
-                    amount: Uint128::from(100_000000000000000000u128),
+                    amount: Uint128::from(50_000000000000000000u128),
                 })
                 .unwrap(),
                 funds: vec![],

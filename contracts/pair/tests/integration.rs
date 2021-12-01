@@ -258,9 +258,9 @@ fn test_compatibility_of_tokens_with_different_precision() {
 
     let token_code_id = store_token_code(&mut app);
 
-    let x_amount = Uint128::new(1000000_00000);
+    let x_amount = Uint128::new(500000_00000);
     let y_amount = Uint128::new(1000000_0000000);
-    let x_offer = Uint128::new(1_00000);
+    let x_offer = Uint128::new(5_0000);
     let y_expected_return = Uint128::new(1_0000000);
 
     let token_name = "Xtoken";
@@ -560,4 +560,14 @@ fn create_pair_with_same_assets() {
         .unwrap_err();
 
     assert_eq!(resp.to_string(), "Doubling assets in asset infos")
+}
+
+fn mint_tokens(app: &mut App, token: &Addr, recipient: &Addr, amount: u128) {
+    let msg = Cw20ExecuteMsg::Mint {
+        recipient: recipient.to_string(),
+        amount: Uint128::from(amount),
+    };
+
+    app.execute_contract(Addr::unchecked(OWNER), token.to_owned(), &msg, &[])
+        .unwrap();
 }
