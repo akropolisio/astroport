@@ -3,7 +3,7 @@ use crate::contract::{
     query_reverse_simulation, query_share, query_simulation, reply,
 };
 use crate::error::ContractError;
-use crate::math::calc_amount;
+use crate::math::{calc_amount, AMP_PRECISION};
 use crate::mock_querier::mock_dependencies;
 
 use crate::response::MsgInstantiateContractResponse;
@@ -636,7 +636,7 @@ fn try_native_to_token() {
         init_params: Some(to_binary(&StablePoolParams { amp: 100 }).unwrap()),
     };
 
-    let env = mock_env();
+    let env = mock_env_with_block_time(100);
     let info = mock_info("addr0000", &[]);
     // we can just call .unwrap() to assert this was a success
     let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -665,7 +665,7 @@ fn try_native_to_token() {
         }],
     );
 
-    let res = execute(deps.as_mut(), env, info, msg).unwrap();
+    let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
     let msg_transfer = res.messages.get(0).expect("no message");
 
     let model: StableSwapModel = StableSwapModel::new(
@@ -697,6 +697,7 @@ fn try_native_to_token() {
 
     let simulation_res: SimulationResponse = query_simulation(
         deps.as_ref(),
+        env.clone(),
         Asset {
             info: AssetInfo::NativeToken {
                 denom: "uusd".to_string(),
@@ -712,6 +713,7 @@ fn try_native_to_token() {
     // check reverse simulation res
     let reverse_simulation_res: ReverseSimulationResponse = query_reverse_simulation(
         deps.as_ref(),
+        env,
         Asset {
             info: AssetInfo::Token {
                 contract_addr: Addr::unchecked("asset0000"),
@@ -824,7 +826,7 @@ fn try_token_to_native() {
         init_params: Some(to_binary(&StablePoolParams { amp: 100 }).unwrap()),
     };
 
-    let env = mock_env();
+    let env = mock_env_with_block_time(100);
     let info = mock_info("addr0000", &[]);
     // we can just call .unwrap() to assert this was a success
     let _res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -863,7 +865,7 @@ fn try_token_to_native() {
     let env = mock_env_with_block_time(1000);
     let info = mock_info("asset0000", &[]);
 
-    let res = execute(deps.as_mut(), env, info, msg).unwrap();
+    let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
     let msg_transfer = res.messages.get(0).expect("no message");
 
     let model: StableSwapModel = StableSwapModel::new(
@@ -905,6 +907,7 @@ fn try_token_to_native() {
 
     let simulation_res: SimulationResponse = query_simulation(
         deps.as_ref(),
+        env.clone(),
         Asset {
             amount: offer_amount,
             info: AssetInfo::Token {
@@ -920,6 +923,7 @@ fn try_token_to_native() {
     // check reverse simulation res
     let reverse_simulation_res: ReverseSimulationResponse = query_reverse_simulation(
         deps.as_ref(),
+        env,
         Asset {
             amount: expected_return_amount,
             info: AssetInfo::NativeToken {
@@ -1256,7 +1260,7 @@ fn test_accumulate_prices() {
 
         let env = mock_env_with_block_time(case.block_time);
         let config = accumulate_prices(
-            env,
+            env.clone(),
             &Config {
                 pair_info: PairInfo {
                     asset_infos: [
@@ -1275,7 +1279,10 @@ fn test_accumulate_prices() {
                 block_time_last: case.block_time_last,
                 price0_cumulative_last: Uint128::new(case.last0),
                 price1_cumulative_last: Uint128::new(case.last1),
-                amp: 100,
+                init_amp: 100 * AMP_PRECISION,
+                init_amp_time: env.block.time.seconds(),
+                next_amp: 100 * AMP_PRECISION,
+                next_amp_time: env.block.time.seconds(),
             },
             Uint128::new(case.x_amount),
             6,
@@ -1328,7 +1335,7 @@ proptest! {
             balance_in,
             balance_out,
             amount_in,
-            amp
+            amp * AMP_PRECISION
         ).unwrap();
 
         let sim_result = model.sim_exchange(0, 1, amount_in);
